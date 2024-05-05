@@ -26,53 +26,65 @@ app.post("/fetchDeck", async (req, res) => {
     res.send({ message: "Deck fetched successfully", data: result });
   } catch (error) {
     console.error("Failed to fetch deck:", error);
-    res.status(500).send({ message: "Failed to fetch deck" });
+    res
+      .status(500)
+      .send({
+        message: "Failed to fetch deck due to an error: " + error.message,
+      });
   }
 });
 
 async function accessPokemonCardSite(deckCode) {
-  const browser = await puppeteer.launch({
-    headless: false, // デバッグ時は false に設定
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const page = await browser.newPage();
-  await page.goto("https://www.pokemon-card.com/deck/", {
-    waitUntil: "networkidle2",
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: false, // デバッグ時は false に設定
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const page = await browser.newPage();
 
-  page.on("dialog", async (dialog) => {
-    await dialog.accept();
-  });
+    await page.goto("https://www.pokemon-card.com/deck/", {
+      waitUntil: "networkidle2",
+    });
+    page.on("dialog", async (dialog) => {
+      await dialog.accept();
+    });
 
-  await page.type("#deckID", deckCode);
-  await page.click("#searchDeckView");
-  await page.waitForNavigation({ waitUntil: "networkidle2" });
+    await page.type("#deckID", deckCode);
+    await page.click("#searchDeckView");
+    await page.waitForNavigation({ waitUntil: "networkidle2" });
 
-  // レギュレーションチェックを押下
-  await page.click("#fr_regulationChekcBtn");
-  await sleep(2000);
+    // レギュレーションチェックを押下
+    await page.click("#fr_regulationChekcBtn");
+    await sleep(2000);
 
-  // デッキ登録を押下
-  await page.click("#fr_registDeckData");
-  await sleep(2000);
+    // デッキ登録を押下
+    await page.click("#fr_registDeckData");
+    await sleep(2000);
 
-  // デッキ画像を押下
-  await page.waitForSelector("#deckImgeBtn", { visible: true });
-  await page.click("#deckImgeBtn");
+    // デッキ画像を押下
+    await page.waitForSelector("#deckImgeBtn", { visible: true });
+    await page.click("#deckImgeBtn");
 
-  // 新しいタブが開かれるまで待機
-  const newPagePromise = new Promise((x) =>
-    browser.once("targetcreated", (target) => x(target.page()))
-  );
-  const newPage = await newPagePromise;
-  await newPage.waitForSelector(".PopupMain", { visible: true });
+    // 新しいタブが開かれるまで待機
+    const newPagePromise = new Promise((x) =>
+      browser.once("targetcreated", (target) => x(target.page()))
+    );
+    const newPage = await newPagePromise;
+    await newPage.waitForSelector(".PopupMain", { visible: true });
 
-  // デッキ画像を保存
-  const screenshotPath = `screenshots/${deckCode}_final.png`;
-  await newPage.screenshot({ path: screenshotPath });
+    // デッキ画像を保存
+    const screenshotPath = `screenshots/${deckCode}_final.png`;
+    await newPage.screenshot({ path: screenshotPath });
 
-  await browser.close();
-  return screenshotPath;
+    await browser.close();
+    return screenshotPath;
+  } catch (error) {
+    if (browser) await browser.close();
+    throw new Error(
+      "An error occurred while accessing the site: " + error.message
+    );
+  }
 }
 
 app.listen(port, () => {
