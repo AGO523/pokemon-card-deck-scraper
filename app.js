@@ -56,15 +56,18 @@ async function accessPokemonCardSite(deckCode) {
   await page.click("#fr_registDeckData");
   await sleep(2000);
 
+  // デッキ画像を押下
   await page.waitForSelector("#deckImgeBtn", { visible: true });
   await page.click("#deckImgeBtn");
 
+  // 新しいタブが開かれるまで待機
   const newPagePromise = new Promise((x) =>
     browser.once("targetcreated", (target) => x(target.page()))
   );
   const newPage = await newPagePromise;
   await newPage.waitForSelector(".PopupMain", { visible: true });
 
+  // デッキ画像を保存
   const screenshotPath = `screenshots/${deckCode}_final.png`;
   await newPage.screenshot({ path: screenshotPath });
 
@@ -73,5 +76,5 @@ async function accessPokemonCardSite(deckCode) {
 }
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on ${port}`);
 });
