@@ -92,12 +92,12 @@ async function accessPokemonCardSite(deckCode) {
     const screenshotPath = `screenshots/${deckCode}_final.png`;
     console.log("Screenshot taken successfully:", screenshotPath);
 
-    //   console.log("Uploading screenshot to Google Cloud Storage...");
-    //   await uploadBufferToGCS(buffer, screenshotPath);
+    console.log("Uploading screenshot to Google Cloud Storage...");
+    await uploadBufferToGCS(buffer, screenshotPath);
 
-    //   await browser.close();
-    //   console.log("Browser closed successfully.");
-    //   return `https://storage.googleapis.com/${bucketName}/${screenshotPath}`;
+    await browser.close();
+    console.log("Browser closed successfully.");
+    return `https://storage.googleapis.com/${bucketName}/${screenshotPath}`;
   } catch (error) {
     if (browser) {
       console.error("Closing browser due to an error...");
@@ -109,31 +109,31 @@ async function accessPokemonCardSite(deckCode) {
   }
 }
 
-// async function uploadBufferToGCS(buffer, destFileName) {
-//   const bucket = storage.bucket(bucketName);
-//   const file = bucket.file(destFileName);
-//   const stream = file.createWriteStream({
-//     metadata: {
-//       contentType: "image/png",
-//     },
-//   });
+async function uploadBufferToGCS(buffer, destFileName) {
+  const bucket = storage.bucket(bucketName);
+  const file = bucket.file(destFileName);
+  const stream = file.createWriteStream({
+    metadata: {
+      contentType: "image/png",
+    },
+  });
 
-//   return new Promise((resolve, reject) => {
-//     stream.on("error", (err) => {
-//       console.error("Stream to GCS had an error", err);
-//       reject(err);
-//     });
+  return new Promise((resolve, reject) => {
+    stream.on("error", (err) => {
+      console.error("Stream to GCS had an error", err);
+      reject(err);
+    });
 
-//     stream.on("finish", () => {
-//       console.log(
-//         `The file was uploaded successfully to ${bucketName}/${destFileName}`
-//       );
-//       resolve(`https://storage.googleapis.com/${bucketName}/${destFileName}`);
-//     });
+    stream.on("finish", () => {
+      console.log(
+        `The file was uploaded successfully to ${bucketName}/${destFileName}`
+      );
+      resolve(`https://storage.googleapis.com/${bucketName}/${destFileName}`);
+    });
 
-//     stream.end(buffer);
-//   });
-// }
+    stream.end(buffer);
+  });
+}
 
 async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
