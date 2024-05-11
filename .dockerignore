@@ -1,0 +1,15 @@
+__fixtures__
+__test__
+.credentials
+.env
+.eslintignore
+.eslintrc.json
+.git
+.gitignore
+.github
+.prettierignore
+node_modules
+npm-debug.log
+README.md
+test
+credentials.json
