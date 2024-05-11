@@ -4,12 +4,12 @@ const puppeteer = require("puppeteer");
 const { Storage } = require("@google-cloud/storage");
 
 // 環境変数からバケット名を取得
-const bucketName = process.env.GCS_BUCKET;
+const bucketName = process.env.BUCKET_NAME;
 const storage = new Storage();
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.post("/fetchDeck", async (req, res) => {
   const { deckCode } = req.body;
