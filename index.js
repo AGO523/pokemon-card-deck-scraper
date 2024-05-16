@@ -19,7 +19,7 @@ app.post("/fetchDeck", async (req, res) => {
 
   try {
     const screenshotUrl = await accessPokemonCardSite(deckCode);
-    res.send({ message: "Deck fetched successfully", data: screenshotUrl });
+    res.send({ message: "Deck fetched successfully", url: screenshotUrl });
   } catch (error) {
     console.error("Failed to fetch deck:", error);
     res.status(500).send({
@@ -80,7 +80,9 @@ async function accessPokemonCardSite(deckCode) {
     await page.click("#deckImgeBtn");
 
     const newPage = await new Promise((resolve) =>
-      browser.once("targetcreated", (target) => resolve(target.page()))
+      browser.once("targetcreated", async (target) =>
+        resolve(await target.page())
+      )
     );
     console.log("New page opened for deck image...");
     await newPage
@@ -93,11 +95,11 @@ async function accessPokemonCardSite(deckCode) {
     console.log("Screenshot taken successfully:", screenshotPath);
 
     console.log("Uploading screenshot to Google Cloud Storage...");
-    await uploadBufferToGCS(buffer, screenshotPath);
+    const screenshotUrl = await uploadBufferToGCS(buffer, screenshotPath);
 
     await browser.close();
     console.log("Browser closed successfully.");
-    return `https://storage.googleapis.com/${bucketName}/${screenshotPath}`;
+    return screenshotUrl;
   } catch (error) {
     if (browser) {
       console.error("Closing browser due to an error...");
