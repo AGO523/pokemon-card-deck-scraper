@@ -31,7 +31,6 @@ app.post("/fetchDeck", async (req, res) => {
 async function accessPokemonCardSite(deckCode) {
   let browser;
   try {
-    console.log("Launching browser...");
     browser = await puppeteer.launch({
       headless: true,
       executablePath: "/usr/bin/google-chrome-stable",
@@ -48,7 +47,6 @@ async function accessPokemonCardSite(deckCode) {
     });
 
     const page = await browser.newPage();
-    console.log("Opening new page...");
     await page.goto("https://www.pokemon-card.com/deck/", {
       waitUntil: "networkidle2",
     });
@@ -59,7 +57,6 @@ async function accessPokemonCardSite(deckCode) {
 
     console.log("Typing deck ID...");
     await page.type("#deckID", deckCode);
-    console.log("Clicking search button...");
     await page.click("#searchDeckView");
     await page.waitForNavigation({
       waitUntil: "networkidle2",
@@ -90,6 +87,7 @@ async function accessPokemonCardSite(deckCode) {
       .catch((e) => console.error("PopupMain selector not found:", e));
 
     console.log("Taking screenshot...");
+    await sleep(2000);
     const buffer = await newPage.screenshot();
     const screenshotPath = `screenshots/${deckCode}_final.png`;
     console.log("Screenshot taken successfully:", screenshotPath);
