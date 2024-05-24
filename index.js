@@ -86,25 +86,18 @@ async function accessPokemonCardSite(deckCode) {
       .waitForSelector(".PopupMain", { visible: true })
       .catch((e) => console.error("PopupMain selector not found:", e));
 
-    console.log("Waiting for the image to be fully loaded...");
+    console.log("Taking screenshot...");
     await sleep(2000);
+    const buffer = await newPage.screenshot();
+    const screenshotPath = `screenshots/${deckCode}_final.png`;
+    console.log("Screenshot taken successfully:", screenshotPath);
 
-    console.log("Taking screenshot of the image element...");
-    const imageElement = await newPage.$(".deckThumbsImg");
-    if (imageElement) {
-      const buffer = await imageElement.screenshot();
-      const screenshotPath = `screenshots/${deckCode}_final.png`;
-      console.log("Screenshot taken successfully:", screenshotPath);
+    console.log("Uploading screenshot to Google Cloud Storage...");
+    const screenshotUrl = await uploadBufferToGCS(buffer, screenshotPath);
 
-      console.log("Uploading screenshot to Google Cloud Storage...");
-      const screenshotUrl = await uploadBufferToGCS(buffer, screenshotPath);
-
-      await browser.close();
-      console.log("Browser closed successfully.");
-      return screenshotUrl;
-    } else {
-      throw new Error("Image element not found");
-    }
+    await browser.close();
+    console.log("Browser closed successfully.");
+    return screenshotUrl;
   } catch (error) {
     if (browser) {
       console.error("Closing browser due to an error...");
