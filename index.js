@@ -83,12 +83,12 @@ async function accessPokemonCardSite(deckCode) {
     );
     console.log("New page opened for deck image...");
     await newPage
-      .waitForSelector(".PopupMain", { visible: true })
-      .catch((e) => console.error("PopupMain selector not found:", e));
+      .waitForSelector(".deckThumbsImg", { visible: true })
+      .catch((e) => console.error("deckThumbsImg selector not found:", e));
 
     console.log("Taking screenshot...");
-    await sleep(1000);
-    const buffer = await newPage.screenshot();
+    const deckImageElement = await newPage.$(".deckThumbsImg");
+    const buffer = await deckImageElement.screenshot();
     const screenshotPath = `screenshots/${deckCode}_final.png`;
     console.log("Screenshot taken successfully:", screenshotPath);
 
