@@ -64,11 +64,11 @@ async function accessPokemonCardSite(deckCode) {
 
     console.log("Clicking regulation check button...");
     await page.click("#fr_regulationChekcBtn");
-    await sleep(2000);
+    await sleep(1000);
 
     console.log("Registering deck data...");
     await page.click("#fr_registDeckData");
-    await sleep(2000);
+    await sleep(1000);
 
     console.log("Waiting for image button to become visible...");
     await page.waitForSelector("#deckImgeBtn", { visible: true });
@@ -87,7 +87,7 @@ async function accessPokemonCardSite(deckCode) {
       .catch((e) => console.error("PopupMain selector not found:", e));
 
     console.log("Taking screenshot...");
-    await sleep(2000);
+    await sleep(1000);
     const buffer = await newPage.screenshot();
     const screenshotPath = `screenshots/${deckCode}_final.png`;
     console.log("Screenshot taken successfully:", screenshotPath);

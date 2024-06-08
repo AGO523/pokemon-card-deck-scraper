@@ -8,7 +8,7 @@ on:
 env:
   GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
   REGION: asia-northeast1
-  BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+  BUCKET_NAME: pokemon-card-deck-scraper
   ENV: production
 
 jobs:
@@ -43,4 +43,4 @@ jobs:
             --region ${{ env.REGION }} \
             --image ${{ env.REGION }}-docker.pkg.dev/${{ env.GOOGLE_PROJECT_ID }}/pokemon-card-deck-scraper/pokemon-card-deck-scraper:latest \
             --platform managed \
-            --set-env-vars APP_SA_KEY=${{ secrets.APP_SA_KEY }},BUCKET_NAME=${{ env.BUCKET_NAME }}
+            --set-env-vars BUCKET_NAME=${{ env.BUCKET_NAME }}
