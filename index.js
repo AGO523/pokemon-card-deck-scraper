@@ -64,11 +64,11 @@ async function accessPokemonCardSite(deckCode) {
 
     console.log("Clicking regulation check button...");
     await page.click("#fr_regulationChekcBtn");
-    await sleep(1000);
+    await sleep(500);
 
     console.log("Registering deck data...");
     await page.click("#fr_registDeckData");
-    await sleep(1000);
+    await sleep(500);
 
     console.log("Waiting for image button to become visible...");
     await page.waitForSelector("#deckImgeBtn", { visible: true });
