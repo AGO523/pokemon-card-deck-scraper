@@ -1,11 +1,48 @@
 const express = require("express");
+const axios = require("axios");
 const puppeteer = require("puppeteer");
 const { Storage } = require("@google-cloud/storage");
 
+const d1_id = "d4658898-a398-4788-9d0e-cdf755ce2cd9";
+const cloudflare_account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
+const cloudflare_api_token = process.env.CLOUDFLARE_API_TOKEN;
+const d1_endpoint = `https://api.cloudflare.com/client/v4/accounts/${cloudflare_account_id}/d1/database/${d1_id}/query`;
 const bucketName = process.env.BUCKET_NAME;
 const storage = new Storage();
 const app = express();
 const port = process.env.PORT || 8080;
+
+const updateDeckCodeQuery = (deckId, screenshotUrl) => {
+  return {
+    sql: "UPDATE decks SET screenshot_url = ? WHERE id = ?",
+    params: [screenshotUrl, deckId],
+  };
+};
+
+const prepare = async (sql, params = []) => {
+  try {
+    const response = await axios.post(
+      d1_endpoint,
+      {
+        sql: sql,
+        params: params,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${cloudflare_api_token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Failed to execute query:",
+      error.response ? error.response.data : error.message
+    );
+    throw error;
+  }
+};
 
 app.use(express.json());
 
@@ -17,20 +54,30 @@ app.get("/healthz", (req, res) => {
   res.status(200).send("ok");
 });
 
+// pubsus からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
-  const { deckCode } = req.body;
+  const { deckCode, deckId } = req.body;
   if (!deckCode) {
     return res.status(400).send({ message: "Deck code is required" });
+  }
+  if (!deckId) {
+    return res.status(400).send({ message: "Deck ID is required" });
   }
 
   try {
     const screenshotUrl = await accessPokemonCardSite(deckCode);
-    res.send({ message: "Deck fetched successfully", url: screenshotUrl });
+
+    // prepare関数を使用してD1にクエリを実行
+    const queryData = updateDeckCodeQuery(deckId, screenshotUrl);
+    const result = await prepare(queryData.sql, queryData.params);
+
+    console.log("Cloudflare D1 query result:", result);
+
+    // pubsub の push に対して 200 を返すことで正常終了を通知
+    res.status(200).send();
   } catch (error) {
     console.error("Failed to fetch deck:", error);
-    res.status(500).send({
-      message: "Failed to fetch deck due to an error: " + error.message,
-    });
+    res.status(500).send();
   }
 });
 

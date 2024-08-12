@@ -43,4 +43,6 @@ jobs:
             --region ${{ env.REGION }} \
             --image ${{ env.REGION }}-docker.pkg.dev/${{ env.GOOGLE_PROJECT_ID }}/pokemon-card-deck-scraper/pokemon-card-deck-scraper:latest \
             --platform managed \
-            --set-env-vars BUCKET_NAME=${{ env.BUCKET_NAME }}
+            --set-env-vars BUCKET_NAME=${{ env.BUCKET_NAME }} \
+            --set-env-vars CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} \
+            --set-env-vars CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
