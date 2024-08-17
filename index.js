@@ -15,7 +15,7 @@ const port = process.env.PORT || 8080;
 const updateDeckCodeQuery = (deckCodeId, screenshotUrl, code) => {
   return {
     sql: "UPDATE deckCodes SET imageUrl = ?, code = ? WHERE Id = ?",
-    params: [screenshotUrl, deckCodeId, code],
+    params: [screenshotUrl, code, deckCodeId],
   };
 };
 
