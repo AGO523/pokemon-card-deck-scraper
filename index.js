@@ -12,10 +12,10 @@ const storage = new Storage();
 const app = express();
 const port = process.env.PORT || 8080;
 
-const updateDeckCodeQuery = (deckCodeId, screenshotUrl) => {
+const updateDeckCodeQuery = (deckCodeId, screenshotUrl, code) => {
   return {
-    sql: "UPDATE deckCodes SET imageUrl = ? WHERE Id = ?",
-    params: [screenshotUrl, deckCodeId],
+    sql: "UPDATE deckCodes SET imageUrl = ?, code = ? WHERE Id = ?",
+    params: [screenshotUrl, deckCodeId, code],
   };
 };
 
@@ -54,7 +54,7 @@ app.get("/healthz", (req, res) => {
   res.status(200).send("ok");
 });
 
-// pubsus からの push を受け取るエンドポイント
+// pubsub からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
   const { code, deckCodeId } = req.body;
   if (!code) {
@@ -68,7 +68,7 @@ app.post("/fetchDeck", async (req, res) => {
     const screenshotUrl = await accessPokemonCardSite(code);
 
     // prepare関数を使用してD1にクエリを実行
-    const queryData = updateDeckCodeQuery(deckCodeId, screenshotUrl);
+    const queryData = updateDeckCodeQuery(deckCodeId, screenshotUrl, code);
     const result = await prepare(queryData.sql, queryData.params);
 
     console.log("Cloudflare D1 query result:", result);
