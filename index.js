@@ -56,15 +56,22 @@ app.get("/healthz", (req, res) => {
 
 // pubsub からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
-  const { code, deckCodeId } = req.body;
-  if (!code) {
-    return res.status(400).send({ message: "Deck code is required" });
-  }
-  if (!deckCodeId) {
-    return res.status(400).send({ message: "Deck ID is required" });
-  }
-
   try {
+    const pubsubMessage = req.body.message;
+
+    // Base64 デコードして、元のメッセージを取得
+    const decodedData = Buffer.from(pubsubMessage.data, "base64").toString();
+    const messageData = JSON.parse(decodedData);
+
+    const { code, deckCodeId } = messageData;
+
+    if (!code || !deckCodeId) {
+      return res
+        .status(400)
+        .send({ message: "Deck code and Deck ID are required" });
+    }
+
+    // メインの処理を実行
     const screenshotUrl = await accessPokemonCardSite(code);
 
     // prepare関数を使用してD1にクエリを実行
@@ -73,7 +80,6 @@ app.post("/fetchDeck", async (req, res) => {
 
     console.log("Cloudflare D1 query result:", result);
 
-    // pubsub の push に対して 200 を返すことで正常終了を通知
     res.status(200).send();
   } catch (error) {
     console.error("Failed to fetch deck:", error);
