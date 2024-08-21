@@ -91,7 +91,7 @@ app.post("/fetchDeck", async (req, res) => {
 // ローカルでの開発時には、fetchDeck の代わりにこちらを使用する
 // puppeteer で画像を取得して、GCS にアップロードする
 // 画像のURLを返す
-app.post("/dev/fetchDeck", async (req, res) => {
+app.post("/dev_fetchDeck", async (req, res) => {
   try {
     const { deckCode } = req.body;
 
