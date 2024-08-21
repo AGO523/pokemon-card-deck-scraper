@@ -87,6 +87,29 @@ app.post("/fetchDeck", async (req, res) => {
   }
 });
 
+// ローカル開発用のエンドポイント
+// ローカルでの開発時には、fetchDeck の代わりにこちらを使用する
+// puppeteer で画像を取得して、GCS にアップロードする
+// 画像のURLを返す
+app.post("/dev/fetchDeck", async (req, res) => {
+  try {
+    const { deckCode } = req.body;
+
+    if (!deckCode) {
+      return res.status(400).send({ message: "Deck code is required" });
+    }
+
+    // メインの処理を実行
+    const screenshotUrl = await accessPokemonCardSite(code);
+    res.send({ message: "Deck fetched successfully", url: screenshotUrl });
+  } catch (error) {
+    console.error("Failed to fetch deck:", error);
+    res.status(500).send({
+      message: "Failed to fetch deck due to an error: " + error.message,
+    });
+  }
+});
+
 async function accessPokemonCardSite(deckCode) {
   let browser;
   try {
