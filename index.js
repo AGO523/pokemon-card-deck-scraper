@@ -100,7 +100,7 @@ app.post("/dev_fetchDeck", async (req, res) => {
     }
 
     // メインの処理を実行
-    const screenshotUrl = await accessPokemonCardSite(code);
+    const screenshotUrl = await accessPokemonCardSite(deckCode);
     res.send({ message: "Deck fetched successfully", url: screenshotUrl });
   } catch (error) {
     console.error("Failed to fetch deck:", error);
