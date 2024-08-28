@@ -45,4 +45,5 @@ jobs:
             --platform managed \
             --set-env-vars BUCKET_NAME=${{ env.BUCKET_NAME }} \
             --set-env-vars CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} \
-            --set-env-vars CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            --set-env-vars CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }} \
+            --set-env-vars API_TOKEN=${{ secrets.API_TOKEN }} \

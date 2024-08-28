@@ -12,6 +12,51 @@ const storage = new Storage();
 const app = express();
 const port = process.env.PORT || 8080;
 
+app.use(express.json());
+
+// 画像取得は遅延実行にしたので、下記は実際は不要になる
+// これを消す場合は、cloud monitoring の alert も削除すること
+app.get("/", (res) => {
+  res.send("Hello World!");
+});
+
+// pubsub からの push を受け取るエンドポイント
+app.post("/fetchDeck", async (req, res) => {
+  try {
+    const pubsubMessage = req.body.message;
+
+    // Base64 デコードして、元のメッセージを取得
+    const decodedData = Buffer.from(pubsubMessage.data, "base64").toString();
+    const messageData = JSON.parse(decodedData);
+
+    const { code, deckCodeId, apiToken } = messageData;
+
+    if (apiToken !== process.env.API_TOKEN) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+
+    if (!code || !deckCodeId) {
+      return res
+        .status(400)
+        .send({ message: "Deck code and Deck ID are required" });
+    }
+
+    // メインの処理を実行
+    const screenshotUrl = await accessPokemonCardSite(code);
+
+    // prepare関数を使用してD1にクエリを実行
+    const queryData = updateDeckCodeQuery(deckCodeId, screenshotUrl, code);
+    const result = await prepare(queryData.sql, queryData.params);
+
+    console.log("Cloudflare D1 query result:", result);
+
+    res.status(200).send();
+  } catch (error) {
+    console.error("Failed to fetch deck:", error);
+    res.status(500).send();
+  }
+});
+
 const updateDeckCodeQuery = (deckCodeId, screenshotUrl, code) => {
   return {
     sql: "UPDATE deckCodes SET imageUrl = ?, code = ? WHERE Id = ?",
@@ -44,56 +89,17 @@ const prepare = async (sql, params = []) => {
   }
 };
 
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.get("/healthz", (req, res) => {
-  res.status(200).send("ok");
-});
-
-// pubsub からの push を受け取るエンドポイント
-app.post("/fetchDeck", async (req, res) => {
-  try {
-    const pubsubMessage = req.body.message;
-
-    // Base64 デコードして、元のメッセージを取得
-    const decodedData = Buffer.from(pubsubMessage.data, "base64").toString();
-    const messageData = JSON.parse(decodedData);
-
-    const { code, deckCodeId } = messageData;
-
-    if (!code || !deckCodeId) {
-      return res
-        .status(400)
-        .send({ message: "Deck code and Deck ID are required" });
-    }
-
-    // メインの処理を実行
-    const screenshotUrl = await accessPokemonCardSite(code);
-
-    // prepare関数を使用してD1にクエリを実行
-    const queryData = updateDeckCodeQuery(deckCodeId, screenshotUrl, code);
-    const result = await prepare(queryData.sql, queryData.params);
-
-    console.log("Cloudflare D1 query result:", result);
-
-    res.status(200).send();
-  } catch (error) {
-    console.error("Failed to fetch deck:", error);
-    res.status(500).send();
-  }
-});
-
 // ローカル開発用のエンドポイント
 // ローカルでの開発時には、fetchDeck の代わりにこちらを使用する
 // puppeteer で画像を取得して、GCS にアップロードする
 // 画像のURLを返す
 app.post("/dev_fetchDeck", async (req, res) => {
   try {
-    const { deckCode } = req.body;
+    const { deckCode, apiToken } = req.body;
+
+    if (apiToken !== process.env.API_TOKEN) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
 
     if (!deckCode) {
       return res.status(400).send({ message: "Deck code is required" });
