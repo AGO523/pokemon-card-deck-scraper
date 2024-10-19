@@ -20,6 +20,24 @@ app.get("/", (res) => {
   res.send("Hello World!");
 });
 
+// firebase auth で認証されたユーザーを D1 に保存するエンドポイント
+// uid を受け取る
+// 匿名認証と google 認証の両方で使用する
+app.post("/saveUser", async (req, res) => {
+  try {
+    const { uid } = req.body;
+    const sql =
+      "INSERT INTO users (uid, profileId, displayName, createdAt) VALUES (?, ?, ?, ?)";
+    const params = [uid, "", "", Date.now()];
+    await prepare(sql, params);
+    console.log("User saved successfully:", uid);
+    res.status(200).send();
+  } catch (error) {
+    console.error("Failed to save user:", error);
+    res.status(500).send();
+  }
+});
+
 // pubsub からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
   try {
