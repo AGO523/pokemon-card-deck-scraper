@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const cors = require("cors");
 const puppeteer = require("puppeteer");
 const { Storage } = require("@google-cloud/storage");
 const { initializeApp, applicationDefault } = require("firebase-admin/app");
@@ -20,6 +21,25 @@ app.use(express.json());
 initializeApp({
   credential: applicationDefault(),
 });
+
+const allowedOrigins = [
+  "http://localhost:8788",
+  "https://artora.pages.dev",
+  "https://develop.artora.pages.dev",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // リクエストのoriginが許可リストに含まれているかを確認
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true); // 許可
+      } else {
+        callback(new Error("Not allowed by CORS")); // 拒否
+      }
+    },
+  })
+);
 
 // JWTトークンの検証ミドルウェア
 async function authenticateToken(req, res, next) {
