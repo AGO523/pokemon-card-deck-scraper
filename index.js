@@ -2,6 +2,8 @@ const express = require("express");
 const axios = require("axios");
 const puppeteer = require("puppeteer");
 const { Storage } = require("@google-cloud/storage");
+const { initializeApp, applicationDefault } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
 
 const d1_id = "d4658898-a398-4788-9d0e-cdf755ce2cd9";
 const cloudflare_account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -14,6 +16,29 @@ const port = process.env.PORT || 8080;
 
 app.use(express.json());
 
+// Firebase Admin SDKの初期化
+initializeApp({
+  credential: applicationDefault(),
+});
+
+// JWTトークンの検証ミドルウェア
+async function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) {
+    return res.status(401).send("Authorization header missing");
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decodedToken = await getAuth().verifyIdToken(token);
+    req.user = decodedToken;
+    next(); // 認証成功時に次の処理に進む
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    return res.status(403).send("Unauthorized");
+  }
+}
+
 // 画像取得は遅延実行にしたので、下記は実際は不要になる
 // これを消す場合は、cloud monitoring の alert も削除すること
 app.get("/", (res) => {
@@ -23,9 +48,9 @@ app.get("/", (res) => {
 // firebase auth で認証されたユーザーを D1 に保存するエンドポイント
 // uid を受け取る
 // 匿名認証と google 認証の両方で使用する
-app.post("/saveUser", async (req, res) => {
+app.post("/saveUser", authenticateToken, async (req, res) => {
   try {
-    const { uid } = req.body;
+    const { uid } = req.body; // クライアントから送られてきたuid
     const sql =
       "INSERT INTO users (uid, profileId, displayName, createdAt) VALUES (?, ?, ?, ?)";
     const params = [uid, "", "", Date.now()];
