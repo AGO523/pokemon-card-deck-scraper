@@ -70,10 +70,16 @@ app.get("/", (res) => {
 // 匿名認証と google 認証の両方で使用する
 app.post("/saveUser", authenticateToken, async (req, res) => {
   try {
-    const { uid } = req.body; // クライアントから送られてきたuid
+    const uid = req.user.uid;
+    const email = req.user.email || "";
+    const displayName = req.user.displayName || "";
+    const iconUrl = req.user.photoURL || "";
+    const createdAt = req.user.createdAt;
+
     const sql =
-      "INSERT INTO users (uid, profileId, displayName, createdAt) VALUES (?, ?, ?, ?)";
-    const params = [uid, "", "", Date.now()];
+      "INSERT INTO users (uid, email, displayName, iconUrl, createdAt) VALUES (?, ?, ?, ?)";
+    const params = [uid, email, displayName, iconUrl, createdAt];
+
     await prepare(sql, params);
     console.log("User saved successfully:", uid);
     res.status(200).send();
@@ -83,6 +89,7 @@ app.post("/saveUser", authenticateToken, async (req, res) => {
   }
 });
 
+// pubsub は COMAJI のプロジェクト
 // pubsub からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
   try {
