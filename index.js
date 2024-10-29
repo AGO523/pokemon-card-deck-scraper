@@ -74,11 +74,12 @@ app.post("/saveUser", authenticateToken, async (req, res) => {
     const email = req.user.email || "";
     const displayName = req.user.displayName || "";
     const iconUrl = req.user.photoURL || "";
+    const profileId = req.user.profileId || "";
     const createdAt = req.user.createdAt;
 
     const sql =
-      "INSERT INTO users (uid, email, displayName, iconUrl, createdAt) VALUES (?, ?, ?, ?, ?)";
-    const params = [uid, email, displayName, iconUrl, createdAt];
+      "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
+    const params = [uid, email, displayName, iconUrl, profileId, createdAt];
 
     await prepare(sql, params);
     console.log("User saved successfully:", uid);
