@@ -73,7 +73,7 @@ app.post("/saveUser", authenticateToken, async (req, res) => {
     const { uid, email, displayName, iconUrl, profileId, createdAt } = req.body;
 
     const sql =
-      "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
     const params = [uid, email, displayName, iconUrl, profileId, createdAt];
 
     await prepare(sql, params);
