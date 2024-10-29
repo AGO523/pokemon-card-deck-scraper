@@ -70,15 +70,10 @@ app.get("/", (res) => {
 // 匿名認証と google 認証の両方で使用する
 app.post("/saveUser", authenticateToken, async (req, res) => {
   try {
-    const uid = req.user.uid;
-    const email = req.user.email || "";
-    const displayName = req.user.displayName || "";
-    const iconUrl = req.user.photoURL || "";
-    const profileId = req.user.profileId || "";
-    const createdAt = req.user.createdAt;
+    const { uid, email, displayName, iconUrl, profileId, createdAt } = req.body;
 
     const sql =
-      "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?)";
     const params = [uid, email, displayName, iconUrl, profileId, createdAt];
 
     await prepare(sql, params);
