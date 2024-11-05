@@ -85,6 +85,25 @@ app.post("/saveUser", authenticateToken, async (req, res) => {
   }
 });
 
+// firebase auth で匿名認証していたユーザーが google 認証した際に、
+// 匿名認証のユーザー情報を google 認証のユーザー情報をもとに更新するエンドポイント
+app.post("/updateUser", authenticateToken, async (req, res) => {
+  try {
+    const { uid, email, displayName, iconUrl } = req.body;
+
+    const sql =
+      "UPDATE users SET email = ?, displayName = ?, iconUrl = ? WHERE uid = ?";
+    const params = [email, displayName, iconUrl, uid];
+
+    await prepare(sql, params);
+    console.log("User updated successfully:", uid);
+    res.status(200).send();
+  } catch (error) {
+    console.error("Failed to update user:", error);
+    res.status(500).send();
+  }
+});
+
 // pubsub は COMAJI のプロジェクト
 // pubsub からの push を受け取るエンドポイント
 app.post("/fetchDeck", async (req, res) => {
