@@ -68,20 +68,50 @@ app.get("/", (res) => {
 // firebase auth で認証されたユーザーを D1 に保存するエンドポイント
 // uid を受け取る
 // 匿名認証と google 認証の両方で使用する
+// Google 認証の場合は、再ログインの可能性があり、その場合は uid でユーザーを特定して、情報に更新があればデータベースも更新する
 app.post("/saveUser", authenticateToken, async (req, res) => {
   try {
     const { uid, email, displayName, iconUrl, profileId, createdAt } = req.body;
 
+    // 既存のユーザーかどうかを確認
+    const selectSql = "SELECT * FROM users WHERE uid = ?";
+    const selectParams = [uid];
+    const selectResult = await prepare(selectSql, selectParams);
+
+    if (selectResult.result.length > 0) {
+      // 既にユーザーが存在する場合は、パラメータと比較して更新があれば更新する
+      const user = selectResult.result[0];
+      if (
+        user.email === email &&
+        user.displayName === displayName &&
+        user.iconUrl === iconUrl
+      ) {
+        console.log("User already exists, no update needed:", uid);
+        return res.status(200).json({ message: "No update needed" });
+      } else {
+        const updateSql =
+          "UPDATE users SET email = ?, displayName = ?, iconUrl = ?, profileId = ? WHERE uid = ?";
+        const updateParams = [email, displayName, iconUrl, profileId, uid];
+
+        await prepare(updateSql, updateParams);
+        console.log("User updated successfully:", uid);
+        return res.status(200).json({ message: "User updated successfully" });
+      }
+    }
+
+    // ユーザーが存在しない場合は新規登録
     const sql =
       "INSERT INTO users (uid, email, displayName, iconUrl, profileId, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
     const params = [uid, email, displayName, iconUrl, profileId, createdAt];
 
     await prepare(sql, params);
     console.log("User saved successfully:", uid);
-    res.status(200).send();
+    res.status(201).json({ message: "User saved successfully" });
   } catch (error) {
-    console.error("Failed to save user:", error);
-    res.status(500).send();
+    console.error("Failed to save or update user:", error.message);
+    res
+      .status(500)
+      .json({ message: "Failed to save or update user", error: error.message });
   }
 });
 
